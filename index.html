@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <style>
+        .battery-container {
+            width: 200px;
+            height: 40px;
+            border: 3px solid #333;
+            border-radius: 5px;
+            position: relative;
+            background: #e0e0e0;
+        }
+
+        .battery-container::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 20px;
+            background: #333;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .battery-level {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .battery-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello World</h1>
+
+    <section>
+        <h2>Adelaide, Australia</h2>
+        <p id="adelaide-time"></p>
+    </section>
+
+    <section>
+        <h2>Home Battery Level</h2>
+        <div class="battery-container">
+            <div class="battery-level" id="battery-level"></div>
+        </div>
+        <p class="battery-text" id="battery-text">Loading...</p>
+    </section>
+
+    <script>
+        async function updateBatteryLevel() {
+            try {
+                const response = await fetch('/api/battery');
+                const data = await response.json();
+                const percentage = Math.round(data.percentage);
+                document.getElementById('battery-level').style.width = percentage + '%';
+                document.getElementById('battery-text').textContent = percentage + '%';
+            } catch (error) {
+                document.getElementById('battery-text').textContent = 'Error';
+            }
+        }
+
+        updateBatteryLevel();
+        setInterval(updateBatteryLevel, 30000);
+
+        function updateAdelaideTime() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Australia/Adelaide',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('adelaide-time').textContent =
+                now.toLocaleString('en-AU', options);
+        }
+
+        updateAdelaideTime();
+        setInterval(updateAdelaideTime, 1000);
+    </script>
+</body>
+</html>
