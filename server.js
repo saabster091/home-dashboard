@@ -80,23 +80,38 @@ async function authenticate() {
     });
 }
 
-async function getBatteryLevel() {
-    let response = await powerwallRequest('/api/system_status/soe');
+async function getWithAuth(endpoint) {
+    let response = await powerwallRequest(endpoint);
 
     if (response.status === 403) {
         await authenticate();
-        response = await powerwallRequest('/api/system_status/soe');
+        response = await powerwallRequest(endpoint);
     }
 
     return response.data;
 }
 
+async function getPowerData() {
+    const [soe, meters] = await Promise.all([
+        getWithAuth('/api/system_status/soe'),
+        getWithAuth('/api/meters/aggregates')
+    ]);
+
+    return {
+        percentage: soe.percentage,
+        solar: meters.solar?.instant_power || 0,
+        load: meters.load?.instant_power || 0,
+        battery: meters.battery?.instant_power || 0,
+        grid: meters.site?.instant_power || 0
+    };
+}
+
 const server = http.createServer(async (req, res) => {
-    if (req.url === '/api/battery') {
+    if (req.url === '/api/power') {
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Access-Control-Allow-Origin', '*');
         try {
-            const data = await getBatteryLevel();
+            const data = await getPowerData();
             res.writeHead(200);
             res.end(JSON.stringify(data));
         } catch (error) {
