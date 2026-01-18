@@ -153,6 +153,56 @@
             letter-spacing: 1px;
             color: rgba(255, 255, 255, 0.5);
         }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon {
+            font-size: 4rem;
+            line-height: 1;
+        }
+
+        .weather-temp {
+            font-size: 3.5rem;
+            font-weight: 200;
+            color: #fff;
+        }
+
+        .weather-desc {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .weather-detail {
+            text-align: center;
+        }
+
+        .weather-detail-value {
+            font-size: 1.2rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .weather-detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -163,6 +213,29 @@
             <section class="card">
                 <h2>Adelaide, Australia</h2>
                 <p class="time-display" id="adelaide-time"></p>
+            </section>
+
+            <section class="card">
+                <h2>Aldinga Beach Weather</h2>
+                <div class="weather-main">
+                    <span class="weather-icon" id="weather-icon">--</span>
+                    <span class="weather-temp" id="weather-temp">--</span>
+                </div>
+                <p class="weather-desc" id="weather-desc">Loading...</p>
+                <div class="weather-details">
+                    <div class="weather-detail">
+                        <p class="weather-detail-value" id="weather-feels">--</p>
+                        <p class="weather-detail-label">Feels Like</p>
+                    </div>
+                    <div class="weather-detail">
+                        <p class="weather-detail-value" id="weather-humidity">--</p>
+                        <p class="weather-detail-label">Humidity</p>
+                    </div>
+                    <div class="weather-detail">
+                        <p class="weather-detail-value" id="weather-wind">--</p>
+                        <p class="weather-detail-label">Wind</p>
+                    </div>
+                </div>
             </section>
 
             <section class="card">
@@ -211,6 +284,24 @@
 
         updatePowerData();
         setInterval(updatePowerData, 5000);
+
+        async function updateWeather() {
+            try {
+                const response = await fetch('/api/weather');
+                const data = await response.json();
+                document.getElementById('weather-icon').textContent = data.icon;
+                document.getElementById('weather-temp').textContent = Math.round(data.temperature) + '°C';
+                document.getElementById('weather-desc').textContent = data.description;
+                document.getElementById('weather-feels').textContent = Math.round(data.feelsLike) + '°C';
+                document.getElementById('weather-humidity').textContent = data.humidity + '%';
+                document.getElementById('weather-wind').textContent = Math.round(data.windSpeed) + ' km/h';
+            } catch (error) {
+                document.getElementById('weather-desc').textContent = 'Error loading weather';
+            }
+        }
+
+        updateWeather();
+        setInterval(updateWeather, 300000); // Update every 5 minutes
 
         function updateAdelaideTime() {
             const now = new Date();
