@@ -186,12 +186,76 @@ async function getWeather() {
     });
 }
 
+const SERVICES = [
+    { id: 'home', name: 'Home Assistant', url: 'http://192.168.1.210:8123' },
+    { id: 'movies', name: 'Jellyfin', url: 'http://192.168.1.210:8096' },
+    { id: 'ai', name: 'Open WebUI', url: 'http://192.168.1.210:8081' },
+    { id: 'grafana', name: 'Grafana', url: 'http://192.168.1.210:9000' },
+    { id: 'pihole', name: 'Pi-hole', url: 'http://192.168.1.210:8888' },
+    { id: 'solar', name: 'Solar', url: 'http://192.168.1.210:8675' },
+    { id: 'admin', name: 'NPM Admin', url: 'http://192.168.1.210:81' }
+];
+
+function checkService(url) {
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(false), 3000);
+
+        const urlObj = new URL(url);
+        const options = {
+            hostname: urlObj.hostname,
+            port: urlObj.port || 80,
+            path: urlObj.pathname,
+            method: 'GET',
+            timeout: 3000
+        };
+
+        const req = http.request(options, (res) => {
+            clearTimeout(timeout);
+            resolve(res.statusCode < 500);
+        });
+
+        req.on('error', () => {
+            clearTimeout(timeout);
+            resolve(false);
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+            resolve(false);
+        });
+
+        req.end();
+    });
+}
+
+async function getServicesHealth() {
+    const results = await Promise.all(
+        SERVICES.map(async (service) => ({
+            id: service.id,
+            name: service.name,
+            healthy: await checkService(service.url)
+        }))
+    );
+    return results;
+}
+
 const server = http.createServer(async (req, res) => {
     if (req.url === '/api/power') {
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Access-Control-Allow-Origin', '*');
         try {
             const data = await getPowerData();
+            res.writeHead(200);
+            res.end(JSON.stringify(data));
+        } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+        }
+    } else if (req.url === '/api/health') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        try {
+            const data = await getServicesHealth();
             res.writeHead(200);
             res.end(JSON.stringify(data));
         } catch (error) {

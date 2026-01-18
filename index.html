@@ -203,6 +203,84 @@
             letter-spacing: 1px;
             color: rgba(255, 255, 255, 0.5);
         }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .service-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .service-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .service-link.healthy {
+            background: linear-gradient(135deg, rgba(0, 184, 148, 0.2) 0%, rgba(0, 206, 201, 0.1) 100%);
+            border-color: rgba(0, 184, 148, 0.4);
+        }
+
+        .service-link.unhealthy {
+            background: linear-gradient(135deg, rgba(214, 48, 49, 0.2) 0%, rgba(225, 112, 85, 0.1) 100%);
+            border-color: rgba(214, 48, 49, 0.4);
+        }
+
+        .service-link.checking {
+            opacity: 0.6;
+        }
+
+        .service-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-link {
+            position: relative;
+        }
+
+        .service-link.healthy .service-status {
+            background: #00b894;
+            box-shadow: 0 0 8px rgba(0, 184, 148, 0.6);
+        }
+
+        .service-link.unhealthy .service-status {
+            background: #d63031;
+            box-shadow: 0 0 8px rgba(214, 48, 49, 0.6);
+        }
+
+        .service-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .service-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .card.services {
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -255,6 +333,47 @@
                         <p class="power-stat-value load" id="home-load">--</p>
                         <p class="power-stat-label">Home Consumption</p>
                     </div>
+                </div>
+            </section>
+
+            <section class="card services">
+                <h2>Home Services</h2>
+                <div class="services-grid">
+                    <a href="http://home.homenet" class="service-link checking" data-service="home" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">🏠</span>
+                        <span class="service-name">Home Assistant</span>
+                    </a>
+                    <a href="http://movies.homenet" class="service-link checking" data-service="movies" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">🎬</span>
+                        <span class="service-name">Jellyfin</span>
+                    </a>
+                    <a href="http://ai.homenet" class="service-link checking" data-service="ai" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">🤖</span>
+                        <span class="service-name">Open WebUI</span>
+                    </a>
+                    <a href="http://grafana.homenet" class="service-link checking" data-service="grafana" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">📊</span>
+                        <span class="service-name">Grafana</span>
+                    </a>
+                    <a href="http://pihole.homenet" class="service-link checking" data-service="pihole" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">🛡️</span>
+                        <span class="service-name">Pi-hole</span>
+                    </a>
+                    <a href="http://solar.homenet" class="service-link checking" data-service="solar" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">☀️</span>
+                        <span class="service-name">Solar</span>
+                    </a>
+                    <a href="http://admin.homenet" class="service-link checking" data-service="admin" target="_blank">
+                        <span class="service-status"></span>
+                        <span class="service-icon">⚙️</span>
+                        <span class="service-name">NPM Admin</span>
+                    </a>
                 </div>
             </section>
         </div>
@@ -327,6 +446,25 @@
 
         updateAdelaideTime();
         setInterval(updateAdelaideTime, 1000);
+
+        async function updateServicesHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const services = await response.json();
+                services.forEach(service => {
+                    const link = document.querySelector(`[data-service="${service.id}"]`);
+                    if (link) {
+                        link.classList.remove('checking', 'healthy', 'unhealthy');
+                        link.classList.add(service.healthy ? 'healthy' : 'unhealthy');
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to fetch health status:', error);
+            }
+        }
+
+        updateServicesHealth();
+        setInterval(updateServicesHealth, 30000); // Check every 30 seconds
     </script>
 </body>
 </html>
